@@ -1,5 +1,4 @@
 package com.billboarding.Entity.Admin;
-
 import lombok.Data;
 
 @Data
