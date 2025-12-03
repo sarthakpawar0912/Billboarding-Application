@@ -48,7 +48,6 @@ public class AdminDashboardService {
                         .mapToDouble(b -> b.getTotalPrice())
                         .sum()
         );
-
         return res;
     }
 }
