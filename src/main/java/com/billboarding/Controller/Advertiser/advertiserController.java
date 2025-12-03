@@ -2,9 +2,11 @@ package com.billboarding.Controller.Advertiser;
 
 
 import com.billboarding.DTO.Booking.CreateBookingRequest;
+import com.billboarding.Entity.Advertiser.FavouriteBillboard;
 import com.billboarding.Entity.Bookings.Booking;
 import com.billboarding.Entity.OWNER.Billboard;
 import com.billboarding.Entity.User;
+import com.billboarding.Repository.Advertiser.FavouriteBillboardRepository;
 import com.billboarding.Repository.BillBoard.BillboardRepository;
 import com.billboarding.Services.BookingService.BookingService;
 import org.springframework.http.ResponseEntity;
@@ -20,10 +22,11 @@ public class advertiserController {
 
     private final BillboardRepository billboardRepository;
     private final BookingService bookingService;
-
-    public advertiserController(BillboardRepository billboardRepository, BookingService bookingService) {
+    private final FavouriteBillboardRepository favRepo;
+    public advertiserController(BillboardRepository billboardRepository, BookingService bookingService, FavouriteBillboardRepository favRepo) {
         this.billboardRepository = billboardRepository;
         this.bookingService = bookingService;
+        this.favRepo = favRepo;
     }
 
     /**
@@ -82,4 +85,26 @@ public class advertiserController {
         Booking cancelled = bookingService.cancelMyBooking(advertiser, id);
         return ResponseEntity.ok(cancelled);
     }
+
+    @PostMapping("/favourites/{billboardId}")
+    public ResponseEntity<String> addFavourite(
+            @PathVariable Long billboardId,
+            Authentication auth) {
+
+        User adv = (User) auth.getPrincipal();
+
+        if (favRepo.existsByAdvertiserAndBillboard_Id(adv, billboardId)) {
+            return ResponseEntity.ok("Already added");
+        }
+
+        FavouriteBillboard fav = FavouriteBillboard.builder()
+                .advertiser(adv)
+                .billboard(Billboard.builder().id(billboardId).build())
+                .build();
+
+        favRepo.save(fav);
+
+        return ResponseEntity.ok("Added to favourites");
+    }
+
 }

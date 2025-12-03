@@ -23,6 +23,7 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
 
     List<Booking> findByBillboard_Owner(User owner);
 
+    List<Booking> findByBillboard_Id(Long billboardId);
 
     // For admin → filter bookings by status
     List<Booking> findByStatus(BookingStatus status);
