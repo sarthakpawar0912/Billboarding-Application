@@ -26,4 +26,8 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     List<User> findByKycStatus(KycStatus status);
 
+    // 🔹 For admin filters
+    List<User> findByBlockedTrue();
+    List<User> findByRole(UserRole role);
+
 }

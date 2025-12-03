@@ -26,7 +26,6 @@ public class Billboard {
 
     private String location;
 
-    // ⭐ GEO COORDINATES
     private Double latitude;
     private Double longitude;
 
@@ -35,11 +34,10 @@ public class Billboard {
 
     private boolean available;
 
-    // ⭐ BILLBOARD TYPE
     @Enumerated(EnumType.STRING)
-    @Column(name = "billboard_type", nullable = false)
-    private BillboardType type;
-    // Owner
+    @Column(nullable = false)
+    private BillboardType type;  // STATIC / LED / DIGITAL / NEON
+
     @ManyToOne
     @JoinColumn(name = "owner_id")
     private User owner;
@@ -52,7 +50,6 @@ public class Billboard {
         this.available = true;
     }
 
-    // ⭐ MULTIPLE IMAGE PATHS
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "billboard_images", joinColumns = @JoinColumn(name = "billboard_id"))
     @Column(name = "image_path", length = 1024)

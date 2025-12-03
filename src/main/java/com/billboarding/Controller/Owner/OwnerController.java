@@ -21,7 +21,7 @@ public class OwnerController {
 
     private final BillboardService billboardService;
 
-    // Create billboard
+    // CREATE BILLBOARD
     @PostMapping
     public ResponseEntity<?> createBillboard(
             @RequestBody Billboard billboard,
@@ -31,7 +31,7 @@ public class OwnerController {
             return ResponseEntity.badRequest().body("Billboard type is required");
 
         if (billboard.getLatitude() == null || billboard.getLongitude() == null)
-            return ResponseEntity.badRequest().body("Latitude & Longitude required");
+            return ResponseEntity.badRequest().body("Latitude & Longitude are required");
 
         User owner = (User) auth.getPrincipal();
 
@@ -46,10 +46,12 @@ public class OwnerController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Billboard> updateBillboard(
+    public ResponseEntity<?> updateBillboard(
             @PathVariable Long id,
             @RequestBody Billboard updated) {
-        return ResponseEntity.ok(billboardService.updateBillboard(id, updated));
+
+        Billboard saved = billboardService.updateBillboard(id, updated);
+        return ResponseEntity.ok(saved);
     }
 
     @DeleteMapping("/{id}")
@@ -75,6 +77,9 @@ public class OwnerController {
             return ResponseEntity.status(403).body("Not your billboard");
 
         List<String> paths = billboardService.saveImages(id, images);
+
+        if (billboard.getImagePaths() == null)
+            billboard.setImagePaths(new ArrayList<>());
 
         billboard.getImagePaths().addAll(paths);
 
