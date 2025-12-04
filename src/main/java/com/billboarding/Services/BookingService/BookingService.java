@@ -8,12 +8,12 @@ import com.billboarding.Entity.OWNER.Billboard;
 import com.billboarding.Entity.User;
 import com.billboarding.Repository.BillBoard.BillboardRepository;
 import com.billboarding.Repository.Booking.BookingRepository;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+
 @Service
 public class BookingService {
 
@@ -25,26 +25,19 @@ public class BookingService {
         this.billboardRepository = billboardRepository;
     }
 
+    // ================= CREATE BOOKING =================
+
     public Booking createBooking(User advertiser,
                                  Long billboardId,
                                  LocalDate startDate,
                                  LocalDate endDate) {
 
-        if (advertiser.getKycStatus() != KycStatus.APPROVED) {
-            throw new RuntimeException("Your KYC must be APPROVED to book a billboard");
-        }
-
-        if (startDate == null || endDate == null) {
-            throw new RuntimeException("Start date and end date must be provided");
-        }
-        if (endDate.isBefore(startDate)) {
-            throw new RuntimeException("End date cannot be before start date");
-        }
+        if (advertiser.getKycStatus() != KycStatus.APPROVED)
+            throw new RuntimeException("Your KYC must be APPROVED");
 
         Billboard billboard = billboardRepository.findById(billboardId)
                 .orElseThrow(() -> new RuntimeException("Billboard not found"));
 
-        // ⭐ FIXED OVERLAP CHECK ⭐
         boolean conflict = bookingRepository
                 .existsByBillboardAndStatusInAndEndDateGreaterThanEqualAndStartDateLessThanEqual(
                         billboard,
@@ -53,9 +46,8 @@ public class BookingService {
                         endDate
                 );
 
-        if (conflict) {
-            throw new RuntimeException("The billboard is already booked for the selected dates");
-        }
+        if (conflict)
+            throw new RuntimeException("Billboard is already booked for these dates");
 
         long days = ChronoUnit.DAYS.between(startDate, endDate) + 1;
         double totalPrice = billboard.getPricePerDay() * days;
@@ -73,71 +65,51 @@ public class BookingService {
         return bookingRepository.save(booking);
     }
 
+    // ================= ADVERTISER FEATURES =================
+
     public List<Booking> getMyBookings(User advertiser) {
         return bookingRepository.findByAdvertiser(advertiser);
     }
 
     public Booking cancelMyBooking(User advertiser, Long bookingId) {
-
         Booking booking = bookingRepository.findById(bookingId)
                 .orElseThrow(() -> new RuntimeException("Booking not found"));
 
-        if (!booking.getAdvertiser().getId().equals(advertiser.getId())) {
-            throw new RuntimeException("You can only cancel your own bookings");
-        }
+        if (!booking.getAdvertiser().getId().equals(advertiser.getId()))
+            throw new RuntimeException("Not your booking!");
 
-        if (booking.getStatus() != BookingStatus.PENDING) {
+        if (booking.getStatus() != BookingStatus.PENDING)
             throw new RuntimeException("Only PENDING bookings can be cancelled");
-        }
 
         booking.setStatus(BookingStatus.CANCELLED);
         return bookingRepository.save(booking);
     }
 
+    // ================= OWNER FEATURES =================
 
-    // ================= ADMIN OPERATIONS =================
-
-    /**
-     * 🔹 Admin: get ALL bookings in the system
-     */
-    public List<Booking> getAllBookings() {
-        return bookingRepository.findAll();
+    public List<Booking> getPendingRequests(User owner) {
+        return bookingRepository.findByBillboard_OwnerAndStatus(owner, BookingStatus.PENDING);
     }
 
-    /**
-     * 🔹 Admin: get bookings filtered by status
-     * Example: PENDING / APPROVED / REJECTED / CANCELLED
-     */
-    public List<Booking> getBookingsByStatus(BookingStatus status) {
-        return bookingRepository.findByStatus(status);
-    }
-
-
-    // ================= ADMIN ACTIONS =================
-
-    public Booking approveBooking(Long bookingId) {
-
-        Booking booking = bookingRepository.findById(bookingId)
+    public Booking approveBooking(Long id) {
+        Booking booking = bookingRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Booking not found"));
 
-        if (booking.getStatus() != BookingStatus.PENDING) {
-            throw new RuntimeException("Only PENDING bookings can be approved");
-        }
+        if (booking.getStatus() != BookingStatus.PENDING)
+            throw new RuntimeException("Only pending requests can be approved");
 
         booking.setStatus(BookingStatus.APPROVED);
-        booking.setPaymentStatus(PaymentStatus.PENDING);  // advertiser must pay next
+        booking.setPaymentStatus(PaymentStatus.PENDING);
 
         return bookingRepository.save(booking);
     }
 
-    public Booking rejectBooking(Long bookingId) {
-
-        Booking booking = bookingRepository.findById(bookingId)
+    public Booking rejectBooking(Long id) {
+        Booking booking = bookingRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Booking not found"));
 
-        if (booking.getStatus() != BookingStatus.PENDING) {
-            throw new RuntimeException("Only PENDING bookings can be rejected");
-        }
+        if (booking.getStatus() != BookingStatus.PENDING)
+            throw new RuntimeException("Only pending requests can be rejected");
 
         booking.setStatus(BookingStatus.REJECTED);
         booking.setPaymentStatus(PaymentStatus.FAILED);
@@ -145,5 +117,26 @@ public class BookingService {
         return bookingRepository.save(booking);
     }
 
+    public List<Booking> getUpcomingBookings(User owner) {
+        return bookingRepository.findByBillboard_OwnerAndStatusAndStartDateGreaterThanEqual(
+                owner, BookingStatus.APPROVED, LocalDate.now()
+        );
+    }
+
+    public List<Booking> getCompletedBookings(User owner) {
+        return bookingRepository.findByBillboard_OwnerAndStatusAndEndDateLessThan(
+                owner, BookingStatus.APPROVED, LocalDate.now()
+        );
+    }
+
+    public List<Booking> getBookingsForOwner(User owner) {
+        return bookingRepository.findByBillboard_Owner(owner);
+    }
+    public List<Booking> getAllBookings() {
+        return bookingRepository.findAll();
+    }
+    public List<Booking> getBookingsByStatus(BookingStatus status) {
+        return bookingRepository.findByStatus(status);
+    }
 
 }

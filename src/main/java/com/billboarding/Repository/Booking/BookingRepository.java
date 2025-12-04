@@ -2,7 +2,6 @@ package com.billboarding.Repository.Booking;
 
 import com.billboarding.ENUM.BookingStatus;
 import com.billboarding.Entity.Bookings.Booking;
-import com.billboarding.Entity.OWNER.Billboard;
 import com.billboarding.Entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 
@@ -13,9 +12,8 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
 
     List<Booking> findByAdvertiser(User advertiser);
 
-    // ⭐ FIXED METHOD NAME ⭐
     boolean existsByBillboardAndStatusInAndEndDateGreaterThanEqualAndStartDateLessThanEqual(
-            Billboard billboard,
+            com.billboarding.Entity.OWNER.Billboard billboard,
             List<BookingStatus> statuses,
             LocalDate start,
             LocalDate end
@@ -25,6 +23,15 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
 
     List<Booking> findByBillboard_Id(Long billboardId);
 
-    // For admin → filter bookings by status
     List<Booking> findByStatus(BookingStatus status);
+
+    List<Booking> findByBillboard_OwnerAndStatus(User owner, BookingStatus status);
+
+    List<Booking> findByBillboard_OwnerAndStatusAndStartDateGreaterThanEqual(
+            User owner, BookingStatus status, LocalDate date
+    );
+
+    List<Booking> findByBillboard_OwnerAndStatusAndEndDateLessThan(
+            User owner, BookingStatus status, LocalDate date
+    );
 }
