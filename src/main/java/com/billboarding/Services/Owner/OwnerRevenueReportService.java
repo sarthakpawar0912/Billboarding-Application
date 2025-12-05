@@ -10,7 +10,7 @@ import com.lowagie.text.pdf.*;            // OpenPDF
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.awt.Color;                     // <-- FIXED (only import Color)
+import java.awt.Color;
 import java.io.ByteArrayOutputStream;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;

@@ -95,6 +95,8 @@ public class User implements UserDetails {
         return true; // passwords never expire by default
     }
 
+
+
     @Override
     public boolean isEnabled() {
         return true; // user always enabled

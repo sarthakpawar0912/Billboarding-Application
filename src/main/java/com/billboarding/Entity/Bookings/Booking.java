@@ -51,6 +51,19 @@ public class Booking {
 
     private LocalDateTime createdAt;
 
+    // ⭐ Razorpay payment fields
+    @Column(name = "rzp_order_id")
+    private String razorpayOrderId;
+
+    @Column(name = "rzp_payment_id")
+    private String razorpayPaymentId;
+
+    @Column(name = "rzp_signature")
+    private String razorpaySignature;
+
+    private String currency;          // e.g. "INR"
+    private LocalDateTime paymentDate;
+
     @PrePersist
     public void onCreate() {
         this.createdAt = LocalDateTime.now();

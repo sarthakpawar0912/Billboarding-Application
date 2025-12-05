@@ -75,7 +75,11 @@ public class SecurityConfig {
                         // Auth routes
                         .requestMatchers("/api/auth/**").permitAll()
 
-                        // Role-based
+                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                        .requestMatchers("/api/owner/**").hasRole("OWNER")
+                        .requestMatchers("/api/advertiser/**").hasRole("ADVERTISER")
+
+                       // Role-based
                         .requestMatchers("/api/admin/**").hasAuthority("ADMIN")
                         .requestMatchers("/api/owner/**").hasAuthority("OWNER")
                         .requestMatchers("/api/advertiser/**").hasAuthority("ADVERTISER")
