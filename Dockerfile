@@ -13,5 +13,6 @@ RUN ./mvnw clean package -DskipTests
 # Render exposes this port automatically
 EXPOSE 8080
 
-# Run the built JAR
-CMD ["java", "-jar", "target/*.jar"]
+
+# ✅ Use EXACT jar name (no wildcard)
+CMD ["java", "-jar", "target/BillBoarding-And-Hording-0.0.1-SNAPSHOT.jar"]
