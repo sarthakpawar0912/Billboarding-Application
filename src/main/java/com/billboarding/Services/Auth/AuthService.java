@@ -2,19 +2,22 @@ package com.billboarding.Services.Auth;
 
 import com.billboarding.DTO.AuthResponse;
 import com.billboarding.DTO.LoginRequest;
+import com.billboarding.Entity.Security.LoginHistory;
 import com.billboarding.Entity.User;
+import com.billboarding.Repository.Security.LoginHistoryRepository;
 import com.billboarding.Repository.UserRepository;
 import com.billboarding.Services.JWT.JwtService;
 
+import com.billboarding.Services.security.TwoFactorService;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.*;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
-/**
- * AuthService: Handles login and token generation
- */
+import java.time.LocalDateTime;
+
 @Service
 @RequiredArgsConstructor
 public class AuthService {
@@ -22,40 +25,63 @@ public class AuthService {
     private final AuthenticationManager authenticationManager;
     private final UserRepository userRepository;
     private final JwtService jwtService;
+    private final LoginHistoryRepository loginHistoryRepository;
+    private final TwoFactorService twoFactorService;
 
-    public AuthResponse login(LoginRequest request) {
+    public AuthResponse login(
+            LoginRequest request,
+            HttpServletRequest httpRequest
+    ) {
 
-        // STEP 1 → authenticate (email + password)
-        Authentication auth = authenticationManager.authenticate(
+        authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
                         request.getEmail(),
                         request.getPassword()
                 )
         );
 
-        // STEP 2 → load user
         User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
-        // STEP 3 → Check if user is blocked
         if (user.isBlocked()) {
-            throw new RuntimeException("Your account is blocked by admin");
+            throw new RuntimeException("Your account is blocked");
         }
 
-        /**
-         * ❌ KYC CHECK REMOVED (Option A)
-         * Owners & Advertisers can login even if KYC is pending.
-         */
+        // ✅ Save login history
+        loginHistoryRepository.save(
+                LoginHistory.builder()
+                        .email(user.getEmail())
+                        .ipAddress(httpRequest.getRemoteAddr())
+                        .userAgent(httpRequest.getHeader("User-Agent"))
+                        .loginAt(LocalDateTime.now())
+                        .build()
+        );
 
-        // STEP 4 → Generate JWT token
-        String token = jwtService.generateToken(user.getEmail(), user.getRole().name());
+        // 🔐 2FA CHECK
+        if (user.isTwoFactorEnabled()) {
+            twoFactorService.sendOTP(user.getEmail());
 
-        // STEP 5 → Return response DTO
+            return new AuthResponse(
+                    true,
+                    null,
+                    user.getRole().name(),
+                    user.getId(),
+                    "OTP sent to email"
+                        );
+        }
+
+        // 🔓 No 2FA → issue JWT
+        String token = jwtService.generateToken(
+                user.getEmail(),
+                user.getRole().name()
+        );
+
         return new AuthResponse(
+                false,
                 token,
                 user.getRole().name(),
                 user.getId(),
                 "Login successful"
-        );
+                );
     }
 }

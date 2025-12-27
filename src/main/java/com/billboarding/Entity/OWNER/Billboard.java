@@ -13,8 +13,8 @@ import java.util.List;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@Entity
 @Builder
+@Entity
 @Table(name = "billboards")
 public class Billboard {
 
@@ -23,7 +23,6 @@ public class Billboard {
     private Long id;
 
     private String title;
-
     private String location;
 
     private Double latitude;
@@ -36,7 +35,7 @@ public class Billboard {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private BillboardType type;  // STATIC / LED / DIGITAL / NEON
+    private BillboardType type; // STATIC / LED / DIGITAL / NEON
 
     @ManyToOne
     @JoinColumn(name = "owner_id")
@@ -51,7 +50,10 @@ public class Billboard {
     }
 
     @ElementCollection(fetch = FetchType.EAGER)
-    @CollectionTable(name = "billboard_images", joinColumns = @JoinColumn(name = "billboard_id"))
+    @CollectionTable(
+            name = "billboard_images",
+            joinColumns = @JoinColumn(name = "billboard_id")
+    )
     @Column(name = "image_path", length = 1024)
     private List<String> imagePaths = new ArrayList<>();
 }

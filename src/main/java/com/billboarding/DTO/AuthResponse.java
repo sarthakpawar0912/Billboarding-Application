@@ -11,6 +11,8 @@ import lombok.Data;
 @AllArgsConstructor
 public class AuthResponse {
 
+
+    private boolean twoFactorRequired;
     private String token;   // JWT token
     private String role;    // User role (ADMIN / OWNER / ADVERTISER)
     private Long userId;    // Logged-in user id

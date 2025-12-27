@@ -59,5 +59,27 @@ public class OwnerBooking {
         return bookingRepository.save(booking);
     }
 
+    public List<Booking> getPendingRequests(User owner) {
+        return bookingRepository.findByBillboard_OwnerAndStatus(
+                owner,
+                BookingStatus.PENDING
+        );
+    }
+
+    public List<Booking> getUpcomingBookings(User owner) {
+        return bookingRepository.findByBillboard_OwnerAndStatus(
+                owner,
+                BookingStatus.APPROVED
+        );
+    }
+
+    public List<Booking> getCompletedBookings(User owner) {
+        return bookingRepository.findByBillboard_OwnerAndStatus(
+                owner,
+                BookingStatus.APPROVED
+        );
+    }
+
+
 
 }

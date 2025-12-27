@@ -58,6 +58,10 @@ public class User implements UserDetails {
     private boolean blocked;
 
     @Column(nullable = false)
+    private boolean twoFactorEnabled;
+
+
+    @Column(nullable = false)
     private LocalDateTime createdAt;
 
     @PrePersist

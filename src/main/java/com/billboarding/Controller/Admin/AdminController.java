@@ -4,8 +4,11 @@ import com.billboarding.ENUM.BookingStatus;
 import com.billboarding.ENUM.KycStatus;
 import com.billboarding.Entity.Bookings.Booking;
 import com.billboarding.Entity.User;
+import com.billboarding.Repository.Audit.BookingAuditRepository;
+import com.billboarding.Services.Admin.AdminAnalyticsService;
 import com.billboarding.Services.Admin.AdminsService;
 import com.billboarding.Services.AdminService;
+import com.billboarding.Services.Audit.BookingAuditService;
 import com.billboarding.Services.BookingService.BookingService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -28,10 +31,14 @@ public class AdminController {
 
     private final AdminsService adminService;
     private final BookingService bookingService;
+    private final AdminAnalyticsService adminAnalyticsService;
+    private final BookingAuditRepository bookingAuditRepository;
 
-    public AdminController(AdminsService adminService, BookingService bookingService) {
+    public AdminController(AdminsService adminService, BookingService bookingService, AdminService adminAnalyticsService, AdminAnalyticsService adminAnalyticsService1, BookingAuditService bookingAuditService, BookingAuditRepository bookingAuditRepository) {
         this.adminService = adminService;
         this.bookingService = bookingService;
+        this.adminAnalyticsService = adminAnalyticsService1;
+        this.bookingAuditRepository = bookingAuditRepository;
     }
 
     /**
@@ -125,5 +132,20 @@ public class AdminController {
         return ResponseEntity.ok(bookingService.rejectBooking(id));
     }
 
+    @GetMapping("/analytics/cancellations")
+    public ResponseEntity<?> cancellationAnalytics() {
+        return ResponseEntity.ok(
+                adminAnalyticsService.getCancellationStats()
+        );
+    }
+
+    @GetMapping("/bookings/{id}/audit")
+    public ResponseEntity<?> bookingAudit(
+            @PathVariable Long id
+    ) {
+        return ResponseEntity.ok(
+                bookingAuditRepository.findByBookingId(id)
+        );
+    }
 
 }

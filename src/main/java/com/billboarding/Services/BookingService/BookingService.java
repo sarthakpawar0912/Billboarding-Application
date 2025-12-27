@@ -8,6 +8,7 @@ import com.billboarding.Entity.OWNER.Billboard;
 import com.billboarding.Entity.User;
 import com.billboarding.Repository.BillBoard.BillboardRepository;
 import com.billboarding.Repository.Booking.BookingRepository;
+import com.billboarding.Services.Audit.BookingAuditService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -19,10 +20,12 @@ public class BookingService {
 
     private final BookingRepository bookingRepository;
     private final BillboardRepository billboardRepository;
+    private final BookingAuditService bookingAuditService;
 
-    public BookingService(BookingRepository bookingRepository, BillboardRepository billboardRepository) {
+    public BookingService(BookingRepository bookingRepository, BillboardRepository billboardRepository, BookingAuditService bookingAuditService) {
         this.bookingRepository = bookingRepository;
         this.billboardRepository = billboardRepository;
+        this.bookingAuditService = bookingAuditService;
     }
 
     public Booking createBooking(User advertiser,
@@ -141,6 +144,44 @@ public class BookingService {
 
         booking.setStatus(BookingStatus.REJECTED);
         booking.setPaymentStatus(PaymentStatus.FAILED);
+
+        return bookingRepository.save(booking);
+    }
+
+    public Booking cancelAfterPayment(User advertiser, Long bookingId) {
+
+        Booking booking = bookingRepository.findById(bookingId)
+                .orElseThrow(() -> new RuntimeException("Booking not found"));
+
+        if (!booking.getAdvertiser().getId().equals(advertiser.getId())) {
+            throw new RuntimeException("You can cancel only your booking");
+        }
+
+        if (booking.getStatus() == BookingStatus.REJECTED) {
+            throw new RuntimeException("Booking already rejected");
+        }
+
+        if (booking.getPaymentStatus() == PaymentStatus.PAID) {
+            booking.setStatus(BookingStatus.CANCELLED_NO_REFUND);
+        } else {
+            booking.setStatus(BookingStatus.CANCELLED);
+        }
+        if (booking.getPaymentStatus() == PaymentStatus.PAID) {
+            booking.setStatus(BookingStatus.CANCELLED_NO_REFUND);
+            bookingAuditService.log(
+                    booking,
+                    "CANCELLED_NO_REFUND",
+                    advertiser
+            );
+        } else {
+            booking.setStatus(BookingStatus.CANCELLED);
+            bookingAuditService.log(
+                    booking,
+                    "CANCELLED",
+                    advertiser
+            );
+        }
+
 
         return bookingRepository.save(booking);
     }
